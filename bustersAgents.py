@@ -71,6 +71,7 @@ class GreedyBustersAgent(BustersAgent):
     "Pre-computes the distance between every two points."
     BustersAgent.registerInitialState(self, gameState)
     self.distancer = Distancer(gameState.data.layout, False)
+    self.debug = 0
     
   def chooseAction(self, gameState):
     """
@@ -107,5 +108,32 @@ class GreedyBustersAgent(BustersAgent):
     livingGhostPositionDistributions = [beliefs for i,beliefs
                                         in enumerate(self.ghostBeliefs)
                                         if livingGhosts[i+1]]
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+
+    if self.debug == 3:
+        print "Living Ghosts: ", livingGhosts
+
+    #First computes the most likely position of each ghost that has not yet been captured
+    probableGhostLocations = [lgpDistribution.argMax() for lgpDistribution in livingGhostPositionDistributions]
+    if self.debug == 3:
+        print "Probable Ghost Locations: ", probableGhostLocations
+
+    # Then find closest ghost
+    min = float("inf")
+    for ghostLocation in probableGhostLocations:
+        distance = self.distancer.getDistance(ghostLocation, pacmanPosition)
+        if distance < min:
+            min = distance
+            closestGhost = ghostLocation
+
+    # Then find the action that minimizes the distance to the closest ghost
+    min = float("inf")
+    for action in legal:
+        successorPosition = Actions.getSuccessor(pacmanPosition, action)
+        distance = self.distancer.getDistance(successorPosition,closestGhost)
+        if distance < min:
+            min = distance
+            actionTowardsGhost = action
+
+    # Finally return computed action
+    return actionTowardsGhost
